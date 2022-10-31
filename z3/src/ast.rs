@@ -1139,7 +1139,7 @@ macro_rules! bv_overflow_check_signed {
 }
 
 impl<'ctx> BV<'ctx> {
-    pub fn from_str(ctx: &'ctx Context, sz: u32, value: &str) -> Option<BV<'ctx>> {
+    pub fn from_str(ctx: &'ctx Context, value: &str, sz: u32) -> Option<BV<'ctx>> {
         let sort = Sort::bitvector(ctx, sz);
         let ast = unsafe {
             let bv_cstring = CString::new(value).unwrap();
