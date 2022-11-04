@@ -1205,6 +1205,17 @@ impl<'ctx> BV<'ctx> {
         }
     }
 
+    pub fn as_string(&self) -> Option<std::string::String> {
+        unsafe {
+            let bytes = Z3_get_numeral_string(self.ctx.z3_ctx, self.get_z3_ast());
+            if bytes.is_null() {
+                return None;
+            } else {
+                Some(CStr::from_ptr(bytes).to_string_lossy().into_owned())
+            }
+        }
+    }
+
     /// Create a bit vector from an integer.
     ///
     /// The bit vector will have width `sz`.
