@@ -97,6 +97,14 @@ impl<'ctx> FuncDecl<'ctx> {
             }
         }
     }
+
+    /// Return the range of the given declaration.
+    ///
+    /// If d is a constant (i.e. has zero arguments), then this function returns the sort of
+    /// the constant.
+    pub fn range(&self) -> Sort<'ctx> {
+        unsafe { Sort::wrap(self.ctx, Z3_get_range(self.ctx.z3_ctx, self.z3_func_decl)) }
+    }
 }
 
 impl<'ctx> fmt::Display for FuncDecl<'ctx> {

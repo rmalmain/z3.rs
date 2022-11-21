@@ -2,10 +2,10 @@ use ast::Ast;
 use std::ffi::CStr;
 use std::fmt;
 use z3_sys::*;
-use ::{Context, FuncDecl};
-use Model;
 use Optimize;
 use Solver;
+use {Context, FuncDecl};
+use {Model, Sort};
 
 impl<'ctx> Model<'ctx> {
     unsafe fn wrap(ctx: &'ctx Context, z3_mdl: Z3_model) -> Model<'ctx> {
@@ -70,9 +70,7 @@ impl<'ctx> Model<'ctx> {
 
     /// Returns the number of constants assigned by the given model.
     pub fn get_num_consts(&self) -> u32 {
-        unsafe {
-            Z3_model_get_num_consts(self.ctx.z3_ctx, self.z3_mdl)
-        }
+        unsafe { Z3_model_get_num_consts(self.ctx.z3_ctx, self.z3_mdl) }
     }
 
     /// Return the index-th constant in the given model.
@@ -82,31 +80,69 @@ impl<'ctx> Model<'ctx> {
             None
         } else {
             unsafe {
-                Some(FuncDecl{
-                    ctx: self.ctx,
-                    z3_func_decl: Z3_model_get_const_decl(self.ctx.z3_ctx, self.z3_mdl, index)
-                })
+                Some(FuncDecl::wrap(
+                    self.ctx,
+                    Z3_model_get_const_decl(self.ctx.z3_ctx, self.z3_mdl, index),
+                ))
             }
         }
     }
 
+    /// Return the interpretation (i.e., assignment) of constant associated to `func_decl` in the given model.
     ///
+    /// Return None if the model does not assign an interpretation to the constant associated with `func_decl`. That
+    /// should be interpreted as: the value associated with `func_decl` does not matter.
+    ///
+    /// The sort of the generic type must be the same as the sort of the interpretation of `func_decl`, otherwise the
+    /// function panics. This check is done *after* the above verification.
     pub fn get_const_interp<T>(&self, func_decl: &FuncDecl) -> Option<T>
-        where
+    where
         T: Ast<'ctx>,
     {
-        let res = unsafe {
-            Z3_model_get_const_interp(
-                self.ctx.z3_ctx,
-                self.z3_mdl,
-                func_decl.z3_func_decl
-            )
+        let res_ast = unsafe {
+            Z3_model_get_const_interp(self.ctx.z3_ctx, self.z3_mdl, func_decl.z3_func_decl)
         };
 
-        if res.is_null() {
+        if res_ast.is_null() {
             None
         } else {
-            Some(unsafe { T::wrap(self.ctx, res) })
+            let res_ast_sort =
+                unsafe { Sort::wrap(self.ctx, Z3_get_sort(self.ctx.z3_ctx, res_ast)) };
+            let res = unsafe { T::wrap(self.ctx, res_ast) };
+
+            assert_eq!(res.get_sort(), res_ast_sort);
+
+            Some(res)
+        }
+    }
+
+    /// Return the interpretation (i.e., assignment) of constant associated to `func_decl`
+    /// in the given model.
+    ///
+    /// Return None if the model does not assign an interpretation to the constant associated with
+    /// `func_decl`. That should be interpreted as: the value associated with `func_decl` does not
+    /// matter.
+    ///
+    /// The sort of the generic type must be the same as the sort of the interpretation of
+    /// `func_decl`.
+    ///
+    /// # Safety
+    ///
+    /// The AST sort returned by the function is NOT checked. If the sort of T does not match
+    /// the sort of the interpretation of `func_decl`, the result of this function is
+    /// undefined.
+    pub unsafe fn get_const_interp_unchecked<T>(&self, func_decl: &FuncDecl) -> Option<T>
+    where
+        T: Ast<'ctx>,
+    {
+        let res_ast = unsafe {
+            Z3_model_get_const_interp(self.ctx.z3_ctx, self.z3_mdl, func_decl.z3_func_decl)
+        };
+
+        if res_ast.is_null() {
+            None
+        } else {
+            Some(unsafe { T::wrap(self.ctx, res_ast) })
         }
     }
 }

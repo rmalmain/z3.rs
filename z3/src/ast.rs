@@ -590,15 +590,11 @@ impl<'ctx> Float<'ctx> {
     }
 
     pub fn as_f32(&self) -> f32 {
-        unsafe {
-            Z3_get_numeral_double(self.ctx.z3_ctx, self.z3_ast) as f32
-        }
+        unsafe { Z3_get_numeral_double(self.ctx.z3_ctx, self.z3_ast) as f32 }
     }
 
     pub fn as_f64(&self) -> f64 {
-        unsafe {
-            Z3_get_numeral_double(self.ctx.z3_ctx, self.z3_ast)
-        }
+        unsafe { Z3_get_numeral_double(self.ctx.z3_ctx, self.z3_ast) }
     }
 }
 
