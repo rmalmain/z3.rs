@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use z3_sys::*;
 use Context;
 use Symbol;
@@ -11,6 +11,19 @@ impl Symbol {
                 let ss = CString::new(s.clone()).unwrap();
                 let p = ss.as_ptr();
                 unsafe { Z3_mk_string_symbol(ctx.z3_ctx, p) }
+            }
+        }
+    }
+
+    pub fn from_z3_symbol(ctx: &Context, symbol: Z3_symbol) -> Symbol {
+        unsafe {
+            match Z3_get_symbol_kind(ctx.z3_ctx, symbol) {
+                SymbolKind::Int => Symbol::Int(Z3_get_symbol_int(ctx.z3_ctx, symbol) as u32),
+                SymbolKind::String => Symbol::String(
+                    CStr::from_ptr(Z3_get_symbol_string(ctx.z3_ctx, symbol))
+                        .to_string_lossy()
+                        .into_owned(),
+                ),
             }
         }
     }

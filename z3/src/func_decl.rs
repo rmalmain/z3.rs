@@ -98,6 +98,14 @@ impl<'ctx> FuncDecl<'ctx> {
         }
     }
 
+    pub fn name_symbol(&self) -> Symbol {
+        unsafe {
+            let z3_ctx = self.ctx.z3_ctx;
+            let symbol = Z3_get_decl_name(z3_ctx, self.z3_func_decl);
+            Symbol::from_z3_symbol(self.ctx, symbol)
+        }
+    }
+
     /// Return the range of the given declaration.
     ///
     /// If d is a constant (i.e. has zero arguments), then this function returns the sort of
