@@ -597,7 +597,7 @@ impl<'ctx> Float<'ctx> {
 
     pub fn as_f64(&self) -> f64 {
         unsafe {
-            Z3_get_numeral_double(self.ctx.z3_ctx, self.z3_ast) as f64
+            Z3_get_numeral_double(self.ctx.z3_ctx, self.z3_ast)
         }
     }
 }

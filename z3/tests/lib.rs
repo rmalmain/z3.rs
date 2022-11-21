@@ -145,7 +145,7 @@ fn test_bitvector_from_str() {
 
     let a = ast::BV::new_const(&ctx, "a", 129);
     // 2 ** 128
-    let b = ast::BV::from_str(&ctx, 129, "340282366920938463463374607431768211456").unwrap();
+    let b = ast::BV::from_str(&ctx, "340282366920938463463374607431768211456", 129).unwrap();
 
     let solver = Solver::new(&ctx);
     solver.assert(&a._eq(&b));

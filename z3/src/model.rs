@@ -2,7 +2,7 @@ use ast::Ast;
 use std::ffi::CStr;
 use std::fmt;
 use z3_sys::*;
-use Context;
+use ::{Context, FuncDecl};
 use Model;
 use Optimize;
 use Solver;
@@ -65,6 +65,48 @@ impl<'ctx> Model<'ctx> {
             Some(unsafe { T::wrap(self.ctx, tmp) })
         } else {
             None
+        }
+    }
+
+    /// Returns the number of constants assigned by the given model.
+    pub fn get_num_consts(&self) -> u32 {
+        unsafe {
+            Z3_model_get_num_consts(self.ctx.z3_ctx, self.z3_mdl)
+        }
+    }
+
+    /// Return the index-th constant in the given model.
+    /// Return None if the index is invalid.
+    pub fn get_const_decl(&self, index: u32) -> Option<FuncDecl> {
+        if index >= self.get_num_consts() {
+            None
+        } else {
+            unsafe {
+                Some(FuncDecl{
+                    ctx: self.ctx,
+                    z3_func_decl: Z3_model_get_const_decl(self.ctx.z3_ctx, self.z3_mdl, index)
+                })
+            }
+        }
+    }
+
+    ///
+    pub fn get_const_interp<T>(&self, func_decl: &FuncDecl) -> Option<T>
+        where
+        T: Ast<'ctx>,
+    {
+        let res = unsafe {
+            Z3_model_get_const_interp(
+                self.ctx.z3_ctx,
+                self.z3_mdl,
+                func_decl.z3_func_decl
+            )
+        };
+
+        if res.is_null() {
+            None
+        } else {
+            Some(unsafe { T::wrap(self.ctx, res) })
         }
     }
 }
